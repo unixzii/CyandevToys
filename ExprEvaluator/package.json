@@ -1,0 +1,12 @@
+{
+  "name": "expr-evaluator",
+  "version": "1.0.0",
+  "description": "An experimental expression evaluator.",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Cyandev <unixzii@gmail.com>",
+  "license": "MIT"
+}

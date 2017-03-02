@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Draw B-Tree</title>
+  <style>
+    body {
+      display: flex;
+      margin: 0;
+      padding: 0;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+
+      background-color: #f0f0f0;
+    }
+
+    canvas {
+      /* Optimize for Retina displays. */
+      width: 600px;
+      height: 600px;
+      
+      border-radius: 4px;
+      background-color: #fff;
+
+      box-shadow: 0 3px 6px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body>
+  <canvas width="1200" height="1200">WTF??</canvas>
+  <script>
+    const canvas = document.querySelector('canvas');
+    const ctx = canvas.getContext('2d');
+
+    ctx.strokeStyle = '#000';
+    ctx.lineWidth = 4;
+    ctx.font = '46px Helvetica';
+
+    const tree = {
+      key: 'A',
+      left: {
+        key: 'B',
+        left: {
+          key: 'D',
+          left: {
+            key: 'G',
+            right: {
+              key: 'H'
+            }
+          }
+        },
+        right: {
+          key: 'E'
+        }
+      },
+      right: {
+        key: 'C',
+        left: {
+          key: 'F',
+          left: {
+            key: 'I'
+          },
+          right: {
+            key: 'J'
+          }
+        }
+      }
+    };
+
+    function measure(tree) {
+      if (tree === undefined) {
+        // When measuring a tree which don't have this branch.
+        return 0;
+      }
+
+      if (tree.width > 0) {
+        // Directly reture the cache.
+        return tree.width;
+      }
+
+      if (!(tree.left || tree.right)) {
+        tree.width = 120;
+        return 120;
+      }
+
+      tree.width = measure(tree.left) + measure(tree.right) + 90;
+      return tree.width;
+    }
+
+    function layout(tree) {
+      // Wrap all layouting context in closure.
+      let curY = 100;
+
+      function layoutImpl(_tree, left, right) {
+        if (_tree === undefined) {
+          return;
+        }
+
+        const x = (left + right) / 2;
+        _tree.position = [x, curY];
+
+        curY += 180;
+
+        layoutImpl(_tree.left, x - _tree.width / 2, x);
+        layoutImpl(_tree.right, x, x + _tree.width / 2);
+
+        curY -= 180;
+      }
+
+      layoutImpl(tree, 0, 1200);
+    }
+
+    function draw(tree, predecessor) {
+      // Now, we just need to recursively draw the tree nodes.
+      if (tree === undefined) {
+        return;
+      }
+
+      const x = tree.position[0];
+      const y = tree.position[1];
+
+      ctx.beginPath();
+      ctx.arc(x, y, 60, 0, Math.PI * 2, false);
+      if (predecessor) {
+        // Let's draw a line to connect these nodes.
+        ctx.moveTo(x, y - 60);
+        ctx.lineTo(predecessor.position[0], predecessor.position[1] + 60);
+      }
+      ctx.stroke();
+
+      // I just don't know how to draw the fucking texts in Canvas.
+      ctx.fillText(tree.key, x - 16, y + 14);
+
+      draw(tree.left, tree);
+      draw(tree.right, tree);
+    }
+
+    measure(tree);
+    layout(tree);
+    draw(tree, null);
+  </script>
+</body>
+</html>
