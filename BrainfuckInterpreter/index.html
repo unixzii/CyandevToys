@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Brainfuck</title>
+  <style>
+    textarea {
+      width: 300px;
+      height: 200px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Brainfuck Interpreter</h1>
+  <p>Written by <em>Cyandev</em> just for fun.</p>
+  <textarea id="code" placeholder="Write your code here." spellcheck="false"></textarea>
+  <br>
+  <input id="input" type="text" placeholder="Input" />
+  <button id="btnRun">Run</button>
+  <br>
+  <p>Output:</p>
+  <code id="output"></code>
+  <script>
+    (function () {
+      const __codeArea = document.getElementById('code');
+      const __inputEl = document.getElementById('input');
+      const __runButton = document.getElementById('btnRun');
+      const __outputEl = document.getElementById('output');
+
+      let __inputBuffer;
+
+      function output(chr) {
+        __outputEl.innerText += chr;
+      }
+
+      function input() {
+        if (__inputBuffer.length === 0) {
+          return 0;
+        }
+
+        const ret = __inputBuffer.charCodeAt(0);
+        __inputBuffer = __inputBuffer.substr(1);
+        return ret;
+      }
+
+      function createVM(code) {
+        return {
+          code,
+          pc: 0,
+          ptr: 0,
+          ps: 0,
+          mem: new Int8Array(new ArrayBuffer(1024 * 128)),
+        };
+      }
+
+      function run(vm) {
+        let cycles = 0;
+        while (vm.pc < vm.code.length) {
+          cycles++;
+          if (cycles > 1000000) {
+            if (confirm('It seems that your code will trap into infinite loop, do you want to terminate the execution?')) {
+              return;
+            } else {
+              cycles = 0;
+            }
+          }
+
+          const ins = vm.code[vm.pc];
+          if (ins === '>') {
+            vm.ptr++;
+          } else if (ins === '<') {
+            vm.ptr--;
+          } else if (ins === '+') {
+            vm.mem[vm.ptr]++;
+          } else if (ins === '-') {
+            vm.mem[vm.ptr]--;
+          } else if (ins === '[') {
+            if (vm.mem[vm.ptr] === 0) {
+              let cnt = 1;
+              vm.pc++;
+              while (cnt > 0) {
+                if (vm.code[vm.pc] === '[') {
+                  cnt += 1;
+                } else if (vm.code[vm.pc] === ']') {
+                  cnt -= 1;
+                  if (cnt === 0) {
+                    break;
+                  }
+                }
+                vm.pc++;
+              }
+            }
+          } else if (ins === ']') {
+            if (vm.mem[vm.ptr] !== 0) {
+              let cnt = 1;
+              vm.pc--;
+              while (cnt > 0) {
+                if (vm.code[vm.pc] === ']') {
+                  cnt += 1;
+                } else if (vm.code[vm.pc] === '[') {
+                  cnt -= 1;
+                  if (cnt === 0) {
+                    break;
+                  }
+                }
+                vm.pc--;
+              }
+            }
+          } else if (ins === '.') {
+            output(String.fromCharCode(vm.mem[vm.ptr]));
+          } else if (ins === ',') {
+            vm.mem[vm.ptr] = input();
+          }
+          vm.pc++;
+        }
+      }
+
+      __runButton.onclick = function () {
+        __inputBuffer = __inputEl.value;
+        __outputEl.innerText = '';
+        run(createVM(__codeArea.value));
+      };
+    })();
+  </script>
+</body>
+
+</html>
