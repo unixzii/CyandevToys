@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+</head>
+<body>
+  <svg id="curves" width="500" height="300" viewBox="0 0 500 300"></svg>
+  <script>
+    // Let's create some namespaces first.
+    window.$utils = {};
+    
+    // Then, create a sample dataset.
+    window.sampleDataset = Array.apply(null, new Array(15)).map(() => Math.random());
+
+    (function () {
+      /**
+       * Create a point object conveniently.
+       * 
+       * @param {Number} x
+       * @param {Number} y
+       *
+       * @return {Object} the point object
+       */
+      function point(x, y) {
+        return { x, y };
+      }
+
+      /**
+       * Translate a value from one domain to another one.
+       *
+       * @param {Number} value - the value to translate
+       * @param {Number} min - the min value which translating value can be
+       * @param {Number} max - the max value which translating value can be
+       * @param {Number} scaleMin - the min value which translated value can be
+       * @param {Number} scaleMax - the max value which translated value can be
+       *
+       * @return {Number} the translated value
+       */
+      function normalize(value, min, max, scaleMin, scaleMax) {
+        return scaleMin + ((value - min) / (max - min)) * (scaleMax - scaleMin);
+      }
+
+      /**
+       * Get the mid point of a line with specific radius.
+       *
+       * @param {Object} p1 - start of the line
+       * @param {Object} p2 - end of the line
+       * @param {Number} radius - the radius
+       *
+       * @return {Object} the mid point
+       */
+      function mid(p1, p2, radius) {
+        const vector = { x: p2.x - p1.x, y: p2.y - p1.y };
+        const length = distance(vector, point(0, 0));
+        const unitVector = { x: vector.x / length, y: vector.y / length };
+        
+        return point(p1.x + unitVector.x * radius, p1.y + unitVector.y * radius);
+      }
+
+      /**
+       * Get the distance of two point.
+       *
+       * @param {Object} p1 - first point
+       * @param {Object} p2 - second point
+       *
+       * @return {Number} the distance
+       */
+      function distance(p1, p2) {
+        return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+      }
+
+      // Export these util functions.
+      window.$utils = {
+        point,
+        normalize,
+        distance,
+        mid
+      };
+    })();
+
+    (function () {
+      let svgEl = document.getElementById('curves');
+
+      /**
+       * Create a smooth path based on the giving points.
+       *
+       * @param {Array} points - points on the path
+       * @param {Number} w - width of the viewport
+       * @param {Number} h - height of the viewport
+       * @param {Number} radius - radius of corners on the path
+       *
+       * @return {String} path string
+       */
+      function generatePath(points, w, h, radius) {
+        const [firstPoint, ...rest] = points;
+        
+        let path = `M ${firstPoint.x} ${firstPoint.y}`;
+
+        rest.forEach(function (e, i) {
+          if (i == rest.length - 1) {
+            // We don't need to create any curve for the last point.
+            path += `L ${e.x} ${e.y}`;
+            return;
+          }
+
+          const prevPoint = rest[i - 1] || firstPoint;
+          const nextPoint = rest[i + 1];
+
+          const distanceFromPrev = $utils.distance(e, prevPoint);
+          const distanceFromNext = $utils.distance(e, nextPoint);
+          const threshold = Math.min(distanceFromPrev, distanceFromNext);
+
+          const radiusForPoint = (threshold / 2) < radius ? threshold / 2 : radius;
+
+          const startPoint = $utils.mid(e, prevPoint, radiusForPoint);
+          const endPoint = $utils.mid(e, nextPoint, radiusForPoint);
+
+          path += `L ${startPoint.x} ${startPoint.y}`;
+          path += `S ${e.x} ${e.y} ${endPoint.x} ${endPoint.y}`;
+        });
+
+        return path;
+      }
+
+      function init() {
+        const minValue = Math.min.apply(null, sampleDataset);
+        const maxValue = Math.max.apply(null, sampleDataset);
+
+        const path = generatePath(sampleDataset.map(function (e, i) {
+          return $utils.point(
+            $utils.normalize(i, 0, sampleDataset.length - 1, 10, 490),
+            300 - $utils.normalize(e, minValue, maxValue, 10, 290),
+          );
+        }), 500, 300, 100);
+        const html = `<path d="${path}" stroke="black" fill="none" stroke-width="3"></path>`;
+        svgEl.innerHTML = html;
+      }
+
+      init();
+    })();
+  </script>
+</body>
+</html>
