@@ -9,6 +9,8 @@ var videoWidth = 64;
 var videoHeight = 48;
 var inverse = true;    // "black on white" or "white on black"? It's up to you.
 
+var ws = new WebSocket('ws://localhost:8080');
+
 function inflateStage() {
   rows.forEach(function (elt, i) {
     rowEls[i].innerHTML = elt;
@@ -17,19 +19,19 @@ function inflateStage() {
 
 function characterFromGrayscale(gs) {
   if (gs > 220) {
-    return '@';
+    return '&';
   } else if (gs > 200) {
     return '&';
   } else if (gs > 180) {
-    return '%';
-  } else if (gs > 150) {
     return '#';
+  } else if (gs > 150) {
+    return 'E';
   } else if (gs > 120) {
-    return '?';
+    return 'Q';
   } else if (gs > 100) {
-    return ';';
+    return '=';
   } else if (gs > 80) {
-    return '-';
+    return '_';
   } else if (gs > 40) {
     return '.';
   } else {
@@ -67,7 +69,15 @@ function onFrame() {
     rows.push(rowString);
   }
 
-  inflateStage();
+  if (ws) {
+    if (ws.readyState !== ws.OPEN) {
+      ws = null;
+    } else {
+      ws.send(rows.join('\n'));
+    }
+  } else {
+    inflateStage();
+  }
 
   requestAnimationFrame(onFrame);
 }
