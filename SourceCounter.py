@@ -10,7 +10,7 @@ if not len(sys.argv) >= 2:
 
 root_dir = sys.argv[1]
 verbose_enabled = len(sys.argv) > 2 and sys.argv[2] == '-v'
-supported_langs = ['m', 'h', 'swift', 'c', 'cpp', 'storyboard', 'xib'] # Of course, I'm an iOS programmer.
+supported_langs = ['m', 'h', 'swift', 'c', 'cpp', 'storyboard', 'xib', 'plist'] # Of course, I'm an iOS programmer.
 source_files = []
 counts = {}
 
